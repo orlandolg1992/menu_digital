@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Menú Digital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Fondo claro por defecto */
+        }
+        /* Estilos para el modo oscuro */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1a202c; /* Fondo oscuro */
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+        /* Estilos para el modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Alinea los modales a la parte superior */
+            overflow-y: auto; /* Permite el scroll en el overlay si el contenido es muy largo */
+            padding-top: 2rem; /* Espacio desde la parte superior */
+            padding-bottom: 2rem; /* Espacio desde la parte inferior */
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white; /* Fondo claro por defecto */
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            max-height: 90vh; /* Limita la altura del contenido del modal al 90% del viewport */
+            overflow-y: auto; /* Permite el scroll dentro del contenido del modal */
+        }
+        @media (prefers-color-scheme: dark) {
+            .modal-content {
+                background-color: #2d3748; /* Fondo oscuro para el modal */
+            }
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280; /* gray-500 */
+        }
+        @media (prefers-color-scheme: dark) {
+            .modal-close-btn {
+                color: #a0aec0; /* gray-400 en oscuro */
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-8 dark:bg-gray-900">
+    <div class="bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow-md w-full max-w-4xl mb-8 dark:bg-gray-800">
+
+        <div id="authSection" class="w-full max-w-md mx-auto">
+            <h2 id="authTitle" class="text-xl sm:text-2xl font-bold text-gray-700 mb-4 text-center dark:text-gray-200">Iniciar Sesión</h2>
+
+            <form id="authForm" class="bg-gray-50 p-4 rounded-md shadow-sm mb-6 dark:bg-gray-700">
+                <div class="mb-3">
+                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Usuario:</label>
+                    <input type="text" id="username" name="username" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña:</label>
+                    <input type="password" id="password" name="password" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <button type="submit" id="authSubmitBtn"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <button id="toggleAuthModeBtn" class="w-full text-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 mb-4">
+                ¿No tienes cuenta? Regístrate
+            </button>
+
+            <button id="googleLoginBtn" class="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 mt-4 dark:bg-gray-600 dark:text-gray-100 dark:hover:bg-gray-500">
+                Iniciar Sesión con Google
+            </button>
+
+            <button id="viewPublicMenusBtn" class=" hidden w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 mt-4">
+                Ver Menús Públicos
+            </button>
+        </div>
+
+        <div id="businessesSection" class="w-full hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-700 mb-2 sm:mb-0 dark:text-gray-200">Menús</h2>
+                <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+                    <span id="loggedInUser" class="text-gray-600 text-sm dark:text-gray-300"></span>
+                    <button id="logoutBtn" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm w-full sm:w-auto">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+
+            <button id="openAddBusinessModalBtn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mb-6">
+                Añadir Nuevo Menú
+            </button>
+
+            <div id="businessesList" class="space-y-4">
+                <p class="text-center text-gray-500 dark:text-gray-400" id="loadingBusinesses">Cargando Menús...</p>
+            </div>
+        </div>
+
+        <div id="menuManagementSection" class="w-full hidden">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-700 mb-4 dark:text-gray-200"><span id="currentBusinessName"></span> - Gestión de Menú</h2>
+            <button id="backToBusinessesBtn" class="mb-6 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                ← Volver a Menús
+            </button>
+
+            <button id="openAddCategoryModalBtn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 mb-6">
+                Añadir Nueva Categoría
+            </button>
+
+            <div id="categoriesList" class="space-y-6">
+                <p class="text-center text-gray-500 dark:text-gray-400" id="loadingCategories">Cargando categorías...</p>
+            </div>
+        </div>
+
+        <div id="publicMenuViewerSection" class="w-full hidden">
+            <h2 hidden class="text-xl sm:text-2xl font-bold text-gray-700 mb-4 text-center dark:text-gray-200">Menús Públicos</h2>
+            <button hidden id="backFromPublicMenuBtn" class="mb-6 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                ← Volver a Inicio
+            </button>
+
+            <div hidden class="mb-6">
+                <label for="publicBusinessSelect" class="block text-base sm:text-lg font-medium text-gray-700 mb-2 dark:text-gray-300">Selecciona un Menú:</label>
+                <select id="publicBusinessSelect" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-700 dark:text-gray-100 dark:border-gray-500">
+                    <option value="">-- Selecciona un Menú --</option>
+                </select>
+            </div>
+
+            <div id="publicMenuDisplay" class="space-y-6">
+                <p class="text-center text-gray-500 dark:text-gray-400" id="loadingPublicMenu">Selecciona un Menú para ver su menú.</p>
+            </div>
+        </div>
+
+        <div id="message" class="mt-4 p-3 rounded-md text-sm text-center hidden fixed bottom-4 right-4 z-50"></div>
+    </div>
+
+    <div id="addBusinessModal" class="modal-overlay hidden">
+        <div class="modal-content p-4 sm:p-6">
+            <button class="modal-close-btn" data-modal-id="addBusinessModal">&times;</button>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4 dark:text-gray-200">Añadir Nuevo Menú</h3>
+            <form id="modalAddBusinessForm" class="space-y-4">
+                <div>
+                    <label for="modalBusinessName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre del Menú (ES):</label>
+                    <input type="text" id="modalBusinessName" name="name" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="modalBusinessDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (ES):</label>
+                    <textarea id="modalBusinessDescription" name="description" rows="2"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <div>
+                    <label for="modalBusinessLogo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">URL del Logo (opcional):</label>
+                    <input type="url" id="modalBusinessLogo" name="logo_url"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Añadir Menú
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="addCategoryModal" class="modal-overlay hidden">
+        <div class="modal-content p-4 sm:p-6">
+            <button class="modal-close-btn" data-modal-id="addCategoryModal">&times;</button>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4 dark:text-gray-200">Añadir Nueva Categoría</h3>
+            <form id="modalAddCategoryForm" class="space-y-4">
+                <div>
+                    <label for="modalCategoryName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre (ES):</label>
+                    <input type="text" id="modalCategoryName" name="name" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="modalCategoryDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (ES):</label>
+                    <textarea id="modalCategoryDescription" name="description" rows="1"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <div>
+                    <label for="modalCategoryNameEn" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre (EN):</label>
+                    <input type="text" id="modalCategoryNameEn" name="name_en"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="modalCategoryDescriptionEn" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (EN):</label>
+                    <textarea id="modalCategoryDescriptionEn" name="description_en" rows="1"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <div>
+                    <label for="modalCategoryNameFr" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre (FR):</label>
+                    <input type="text" id="modalCategoryNameFr" name="name_fr"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="modalCategoryDescriptionFr" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (FR):</label>
+                    <textarea id="modalCategoryDescriptionFr" name="description_fr" rows="1"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    Añadir Categoría
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="addMenuItemModal" class="modal-overlay hidden">
+        <div class="modal-content p-4 sm:p-6">
+            <button class="modal-close-btn" data-modal-id="addMenuItemModal">&times;</button>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4 dark:text-gray-200">Añadir Elemento a <span id="modalMenuItemCategoryName" class="font-bold"></span></h3>
+            <form id="modalAddMenuItemForm" class="space-y-4" data-category-id="">
+                <div>
+                    <label for="modalMenuItemName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre (ES):</label>
+                    <input type="text" id="modalMenuItemName" name="name" placeholder="Nombre del plato/bebida" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="modalMenuItemDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (ES):</label>
+                    <textarea id="modalMenuItemDescription" name="description" placeholder="Descripción del elemento (opcional)" rows="1"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <div>
+                    <label for="modalMenuItemNameEn" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre (EN):</label>
+                    <input type="text" id="modalMenuItemNameEn" name="name_en" placeholder="Dish/Drink Name (optional)"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="modalMenuItemDescriptionEn" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (EN):</label>
+                    <textarea id="modalMenuItemDescriptionEn" name="description_en" placeholder="Item description (optional)" rows="1"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <div>
+                    <label for="modalMenuItemNameFr" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre (FR):</label>
+                    <input type="text" id="modalMenuItemNameFr" name="name_fr" placeholder="Nom du plat/boisson (optionnel)"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="modalMenuItemDescriptionFr" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (FR):</label>
+                    <textarea id="modalMenuItemDescriptionFr" name="description_fr" placeholder="Description de l'article (opcional)" rows="1"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <div>
+                    <label for="modalMenuItemPrice" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio (opcional):</label>
+                    <input type="number" id="modalMenuItemPrice" name="price" placeholder="Precio (ej. 12.50)" step="0.01"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Añadir Elemento
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal-overlay hidden">
+        <div class="modal-content p-4 sm:p-6 max-w-sm">
+            <button class="modal-close-btn" data-modal-id="deleteConfirmModal">&times;</button>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4 dark:text-gray-200">Confirmar Eliminación</h3>
+            <p class="text-gray-600 mb-6 dark:text-gray-300">¿Estás seguro de que quieres eliminar <span id="deleteItemName" class="font-bold"></span>? Esta acción no se puede deshacer.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDeleteBtn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-100 dark:hover:bg-gray-500">Cancelar</button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteBusinessConfirmModal" class="modal-overlay hidden">
+        <div class="modal-content p-4 sm:p-6 max-w-sm">
+            <button class="modal-close-btn" data-modal-id="deleteBusinessConfirmModal">&times;</button>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4 dark:text-gray-200">Confirmar Eliminación de Menú</h3>
+            <p class="text-gray-600 mb-6 dark:text-gray-300">¿Estás seguro de que quieres eliminar el Menú <span id="deleteBusinessName" class="font-bold"></span>? Esto eliminará también todas sus categorías y elementos de menú asociados. Esta acción no se puede deshacer.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDeleteBusinessBtn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-100 dark:hover:bg-gray-500">Cancelar</button>
+                <button id="confirmDeleteBusinessBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Eliminar Menú</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteCategoryConfirmModal" class="modal-overlay hidden">
+        <div class="modal-content p-4 sm:p-6 max-w-sm">
+            <button class="modal-close-btn" data-modal-id="deleteCategoryConfirmModal">&times;</button>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4 dark:text-gray-200">Confirmar Eliminación de Categoría</h3>
+            <p class="text-gray-600 mb-6 dark:text-gray-300">¿Estás seguro de que quieres eliminar la categoría <span id="deleteCategoryName" class="font-bold"></span>? Esto eliminará también todos sus elementos de menú asociados. Esta acción no se puede deshacer.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDeleteCategoryBtn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-100 dark:hover:bg-gray-500">Cancelar</button>
+                <button id="confirmDeleteCategoryBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Eliminar Categoría</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Referencias a elementos del DOM
+        const authSection = document.getElementById('authSection');
+        const authForm = document.getElementById('authForm'); // Formulario único
+        const authTitle = document.getElementById('authTitle'); // Título dinámico
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const authSubmitBtn = document.getElementById('authSubmitBtn'); // Botón de enviar dinámico
+        const toggleAuthModeBtn = document.getElementById('toggleAuthModeBtn'); // Botón para alternar modo
+
+        const businessesSection = document.getElementById('businessesSection');
+        const menuManagementSection = document.getElementById('menuManagementSection');
+        const businessesList = document.getElementById('businessesList');
+        const loadingBusinesses = document.getElementById('loadingBusinesses');
+        const currentBusinessName = document.getElementById('currentBusinessName');
+        const backToBusinessesBtn = document.getElementById('backToBusinessesBtn');
+        const categoriesList = document.getElementById('categoriesList');
+        const loadingCategories = document.getElementById('loadingCategories');
+        const messageDiv = document.getElementById('message');
+        const loggedInUserSpan = document.getElementById('loggedInUser');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Elementos para la vista pública
+        const viewPublicMenusBtn = document.getElementById('viewPublicMenusBtn');
+        const publicMenuViewerSection = document.getElementById('publicMenuViewerSection');
+        const backFromPublicMenuBtn = document.getElementById('backFromPublicMenuBtn');
+        const publicBusinessSelect = document.getElementById('publicBusinessSelect');
+        const publicMenuDisplay = document.getElementById('publicMenuDisplay');
+        const loadingPublicMenu = document.getElementById('loadingPublicMenu');
+        const googleLoginBtn = document.getElementById('googleLoginBtn');
+
+        // Referencias a los botones y modales
+        const openAddBusinessModalBtn = document.getElementById('openAddBusinessModalBtn');
+        const addBusinessModal = document.getElementById('addBusinessModal');
+        const modalAddBusinessForm = document.getElementById('modalAddBusinessForm');
+
+        const openAddCategoryModalBtn = document.getElementById('openAddCategoryModalBtn');
+        const addCategoryModal = document.getElementById('addCategoryModal');
+        const modalAddCategoryForm = document.getElementById('modalAddCategoryForm');
+
+        const addMenuItemModal = document.getElementById('addMenuItemModal');
+        const modalAddMenuItemForm = document.getElementById('modalAddMenuItemForm');
+        const modalMenuItemCategoryName = document.getElementById('modalMenuItemCategoryName');
+
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const deleteItemNameSpan = document.getElementById('deleteItemName');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        // Nuevas referencias para eliminar Menú
+        const deleteBusinessConfirmModal = document.getElementById('deleteBusinessConfirmModal');
+        const deleteBusinessNameSpan = document.getElementById('deleteBusinessName');
+        const cancelDeleteBusinessBtn = document.getElementById('cancelDeleteBusinessBtn');
+        const confirmDeleteBusinessBtn = document.getElementById('confirmDeleteBusinessBtn');
+
+        // Nuevas referencias para eliminar categoría
+        const deleteCategoryConfirmModal = document.getElementById('deleteCategoryConfirmModal');
+        const deleteCategoryNameSpan = document.getElementById('deleteCategoryName');
+        const cancelDeleteCategoryBtn = document.getElementById('cancelDeleteCategoryBtn');
+        const confirmDeleteCategoryBtn = document.getElementById('confirmDeleteCategoryBtn');
+
+
+        // Variables de estado de la aplicación
+        let currentBusinessId = null;
+        let currentUserId = null;
+        let currentUsername = null;
+        let currentMenuData = []; // Para almacenar el menú cargado y facilitar la edición
+        let itemToDelete = null; // Para almacenar el ID del item a eliminar temporalmente
+        let businessToDelete = null; // Para almacenar el ID del Menú a eliminar temporalmente
+        let categoryToDelete = null; // Para almacenar el ID de la categoría a eliminar temporalmente
+        let isLoginMode = true; // Controla si el formulario está en modo login o registro
+
+        // --- Funciones de Utilidad ---
+        /**
+         * Muestra mensajes de estado (éxito o error) en la interfaz.
+         * @param {string} msg - El mensaje a mostrar.
+         * @param {string} type - El tipo de mensaje ('success' o 'error').
+         */
+        function showMessage(msg, type = 'success') {
+            messageDiv.textContent = msg;
+            messageDiv.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            if (type === 'success') {
+                messageDiv.classList.add('bg-green-100', 'text-green-800');
+            } else {
+                messageDiv.classList.add('bg-red-100', 'text-red-800');
+            }
+            setTimeout(() => {
+                messageDiv.classList.add('hidden'); // Oculta el mensaje después de 5 segundos
+            }, 5000);
+        }
+
+        /**
+         * Realiza llamadas a la API PHP.
+         * @param {string} action - La acción de la API a llamar.
+         * @param {string} method - El método HTTP ('GET', 'POST').
+         * @param {object} body - El cuerpo de la solicitud (objeto JSON).
+         * @param {object} params - Parámetros de consulta adicionales.
+         * @returns {Promise<object>} La respuesta JSON de la API.
+         */
+        async function apiFetch(action, method = 'GET', body = null, params = null) {
+            let url = `api.php?action=${action}`;
+            const options = { method };
+
+            // Añade el user_id a los parámetros para solicitudes autenticadas
+            // Excluye acciones de autenticación inicial y públicas
+            if (currentUserId && !['register', 'login', 'googleLogin', 'getPublicBusinesses', 'getPublicMenuByBusiness'].includes(action)) {
+                if (!params) params = {};
+                params.user_id = currentUserId;
+            }
+
+            // Construye la cadena de consulta si hay parámetros
+            if (params) {
+                const queryParams = new URLSearchParams(params).toString();
+                url += `&${queryParams}`;
+            }
+
+            // Añade el cuerpo de la solicitud para métodos POST/PUT
+            if (body) {
+                options.headers = { 'Content-Type': 'application/json' };
+                options.body = JSON.stringify(body);
+            }
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Error en la llamada a la API (${action}):`, error);
+                showMessage(`Error: ${error.message}`, 'error');
+                return { success: false, message: error.message };
+            }
+        }
+
+        // --- Funciones para Modales ---
+        /**
+         * Muestra un elemento modal.
+         * @param {HTMLElement} modalElement - El elemento modal a mostrar.
+         */
+        function showModal(modalElement) {
+            modalElement.classList.remove('hidden');
+        }
+
+        /**
+         * Oculta un elemento modal.
+         * @param {HTMLElement} modalElement - El elemento modal a ocultar.
+         */
+        function hideModal(modalElement) {
+            modalElement.classList.add('hidden');
+        }
+
+        // Asigna event listeners a todos los botones de cerrar modal
+        document.querySelectorAll('.modal-close-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const modalId = e.target.dataset.modalId;
+                hideModal(document.getElementById(modalId));
+            });
+        });
+
+        // Cierra el modal si se hace clic fuera del contenido
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideModal(overlay);
+                }
+            });
+        });
+
+
+        // --- Gestión de Vistas ---
+        /**
+         * Oculta todas las secciones principales de la aplicación.
+         */
+        function hideAllSections() {
+            authSection.classList.add('hidden');
+            businessesSection.classList.add('hidden');
+            menuManagementSection.classList.add('hidden');
+            publicMenuViewerSection.classList.add('hidden');
+        }
+
+        /**
+         * Muestra la sección de autenticación.
+         */
+        function showAuthSection() {
+            hideAllSections();
+            authSection.classList.remove('hidden');
+            // Asegurarse de que el formulario esté en modo login por defecto
+            isLoginMode = true;
+            updateAuthFormUI();
+        }
+
+        /**
+         * Muestra la sección de gestión de Menús (requiere autenticación).
+         */
+        function showBusinessesSection() {
+            hideAllSections();
+            businessesSection.classList.remove('hidden');
+            currentBusinessId = null; // Reinicia el ID del Menú actual
+            loadBusinesses(); // Carga la lista de Menús del usuario
+            loggedInUserSpan.textContent = `Conectado como: ${currentUsername}`; // Muestra el nombre de usuario
+        }
+
+        /**
+         * Muestra la sección de gestión de menú para un Menú específico.
+         */
+        function showMenuManagement() {
+            hideAllSections();
+            menuManagementSection.classList.remove('hidden');
+        }
+
+        /**
+         * Muestra la sección de vista pública de menús.
+         * @param {number|null} businessIdToLoad - ID del Menú a cargar en la vista pública (opcional).
+         */
+        async function showPublicMenuViewerSection(businessIdToLoad = null) {
+            hideAllSections();
+            publicMenuViewerSection.classList.remove('hidden');
+            // Carga los Menús en el selector público. Si se proporciona un ID, lo selecciona.
+            await loadPublicBusinessesIntoSelector(businessIdToLoad);
+            publicMenuDisplay.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400" id="loadingPublicMenu">Selecciona un Menú para ver su menú.</p>';
+            publicBusinessSelect.value = businessIdToLoad || ""; // Restablece la selección si no hay ID para cargar
+        }
+
+        // --- Autenticación ---
+        /**
+         * Guarda los datos de autenticación del usuario en localStorage.
+         * @param {number} userId - El ID del usuario.
+         * @param {string} username - El nombre de usuario.
+         */
+        function saveAuthData(userId, username) {
+            localStorage.setItem('user_id', userId);
+            localStorage.setItem('username', username);
+            currentUserId = userId;
+            currentUsername = username;
+        }
+
+        /**
+         * Carga los datos de autenticación del usuario desde localStorage.
+         * @returns {boolean} True si se encontraron datos de autenticación, false en caso contrario.
+         */
+        function loadAuthData() {
+            currentUserId = localStorage.getItem('user_id');
+            currentUsername = localStorage.getItem('username');
+            return currentUserId !== null; // Retorna true si hay datos de autenticación
+        }
+
+        /**
+         * Limpia los datos de autenticación del usuario de localStorage.
+         */
+        function clearAuthData() {
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('username');
+            currentUserId = null;
+            currentUsername = null;
+        }
+
+        /**
+         * Actualiza la UI del formulario de autenticación (título, botón, texto de alternancia).
+         */
+        function updateAuthFormUI() {
+            if (isLoginMode) {
+                authTitle.textContent = 'Iniciar Sesión';
+                authSubmitBtn.textContent = 'Iniciar Sesión';
+                authSubmitBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'focus:ring-green-500');
+                authSubmitBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'focus:ring-indigo-500');
+                toggleAuthModeBtn.textContent = '¿No tienes cuenta? Regístrate';
+            } else {
+                authTitle.textContent = 'Registrarse';
+                authSubmitBtn.textContent = 'Registrarse';
+                authSubmitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'focus:ring-indigo-500');
+                authSubmitBtn.classList.add('bg-green-600', 'hover:bg-green-700', 'focus:ring-green-500');
+                toggleAuthModeBtn.textContent = '¿Ya tienes cuenta? Inicia sesión';
+            }
+        }
+
+        // Event listener para el formulario de autenticación (único)
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                showMessage('Usuario y contraseña son requeridos.', 'error');
+                return;
+            }
+
+            const data = { username, password };
+            let result;
+
+            if (isLoginMode) {
+                result = await apiFetch('login', 'POST', data);
+                if (result.success) {
+                    showMessage('Inicio de sesión exitoso!');
+                    saveAuthData(result.user_id, result.username);
+                    showBusinessesSection();
+                } else {
+                    showMessage(`Error de inicio de sesión: ${result.message}`, 'error');
+                }
+            } else { // Register mode
+                result = await apiFetch('register', 'POST', data);
+                if (result.success) {
+                    showMessage('Registro exitoso! Ahora puedes iniciar sesión.');
+                    authForm.reset();
+                    isLoginMode = true; // Volver al modo login después del registro exitoso
+                    updateAuthFormUI();
+                    usernameInput.value = username; // Rellenar el usuario para el login
+                } else {
+                    showMessage(`Error de registro: ${result.message}`, 'error');
+                }
+            }
+        });
+
+        // Event listener para alternar entre login y registro
+        toggleAuthModeBtn.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            updateAuthFormUI();
+            authForm.reset(); // Limpiar el formulario al cambiar de modo
+        });
+
+        // Event listener para el botón de Google Login (simulado)
+        googleLoginBtn.addEventListener('click', async () => {
+            // Simular obtener un nombre de usuario único de Google
+            const simulatedGoogleUsername = `UsuarioGoogle_${Math.floor(Math.random() * 1000000)}`;
+            const data = { username: simulatedGoogleUsername }; // Pasar el nombre de usuario simulado
+
+            const result = await apiFetch('googleLogin', 'POST', data);
+            if (result.success) {
+                showMessage('Inicio de sesión con Google exitoso!');
+                saveAuthData(result.user_id, result.username);
+                showBusinessesSection();
+            } else {
+                showMessage(`Error al iniciar sesión con Google: ${result.message}`, 'error');
+            }
+        });
+
+        // Event listener para el botón de cerrar sesión
+        logoutBtn.addEventListener('click', () => {
+            clearAuthData();
+            showMessage('Sesión cerrada.', 'success');
+            showAuthSection();
+        });
+
+        // --- Gestión de Menús (Privado) ---
+        /**
+         * Carga y muestra los Menús del usuario actual.
+         */
+        async function loadBusinesses() {
+            if (!currentUserId) {
+                showAuthSection(); // Redirige si no hay usuario autenticado
+                return;
+            }
+            loadingBusinesses.classList.remove('hidden');
+            businessesList.innerHTML = ''; // Limpia la lista antes de cargar
+            const result = await apiFetch('getBusinesses', 'GET');
+
+            if (result.success) {
+                if (result.data.length === 0) {
+                    businessesList.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400">No hay Menús registrados aún. ¡Añade uno!</p>';
+                } else {
+                    result.data.forEach(business => {
+                        const div = document.createElement('div');
+                        div.className = 'bg-white p-4 rounded-md shadow-sm border border-gray-200 flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0 dark:bg-gray-700 dark:border-gray-600';
+                        div.innerHTML = `
+                            <div class="text-center sm:text-left">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">${business.name}</h3>
+                                <p class="text-gray-600 text-sm dark:text-gray-300">${business.description || 'Sin descripción'}</p>
+                            </div>
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                                <button data-business-id="${business.id}" data-business-name="${business.name}"
+                                    class="manage-menu-btn px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm w-full sm:w-auto">
+                                    Gestionar Menú
+                                </button>
+                                <a href="./?view_menu=${business.id}" target="_blank"
+                                   class="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 flex items-center justify-center text-sm w-full sm:w-auto">
+                                    Ver Menú Público
+                                </a>
+                                <button data-business-id="${business.id}" data-business-name="${business.name}"
+                                    class="delete-business-btn px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm w-full sm:w-auto">
+                                    Eliminar Menú
+                                </button>
+                            </div>
+                        `;
+                        businessesList.appendChild(div);
+                    });
+                    // Asigna event listeners a los botones "Gestionar Menú"
+                    document.querySelectorAll('.manage-menu-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            currentBusinessId = e.target.dataset.businessId;
+                            currentBusinessName.textContent = e.target.dataset.businessName;
+                            showMenuManagement();
+                            loadMenuForBusiness(currentBusinessId);
+                        });
+                    });
+                    // Asigna event listeners a los botones "Eliminar Menú"
+                    document.querySelectorAll('.delete-business-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const businessId = parseInt(e.target.dataset.businessId);
+                            const businessName = e.target.dataset.businessName;
+                            showDeleteBusinessConfirmModal(businessId, businessName);
+                        });
+                    });
+                }
+            } else {
+                businessesList.innerHTML = `<p class="text-center text-red-500">Error al cargar Menús: ${result.message}</p>`;
+            }
+            loadingBusinesses.classList.add('hidden');
+        }
+
+        // Event listener para el botón "Añadir Nuevo Menú" (abre modal)
+        openAddBusinessModalBtn.addEventListener('click', () => {
+            modalAddBusinessForm.reset(); // Limpiar el formulario del modal
+            showModal(addBusinessModal);
+        });
+
+        // Event listener para el formulario de añadir Menú (dentro del modal)
+        modalAddBusinessForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(modalAddBusinessForm);
+            const data = Object.fromEntries(formData.entries());
+            data.name = data.name.trim();
+            data.user_id = currentUserId;
+
+            const result = await apiFetch('addBusiness', 'POST', data);
+            if (result.success) {
+                showMessage('Menú añadido exitosamente!');
+                hideModal(addBusinessModal);
+                loadBusinesses();
+            } else {
+                showMessage(`Error al añadir Menú: ${result.message}`, 'error');
+            }
+        });
+
+
+        // Event listener para el botón "Volver a Menús"
+        backToBusinessesBtn.addEventListener('click', showBusinessesSection);
+
+        /**
+         * Carga y muestra el menú de un Menú específico en la sección de gestión.
+         * @param {number} businessId - El ID del Menú cuyo menú se va a cargar.
+         */
+        async function loadMenuForBusiness(businessId) {
+            if (!currentUserId || !businessId) {
+                showMessage('Error: ID de usuario o Menú no disponible.', 'error');
+                showAuthSection();
+                return;
+            }
+
+            loadingCategories.classList.remove('hidden');
+            categoriesList.innerHTML = '';
+
+            const result = await apiFetch('getMenuByBusiness', 'GET', null, { business_id: businessId });
+            currentMenuData = result.data; // Almacenar los datos del menú
+
+            if (result.success) {
+                if (result.data.length === 0) {
+                    categoriesList.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400">Este Menú aún no tiene categorías de menú. ¡Añade una!</p>';
+                } else {
+                    result.data.forEach(category => {
+                        const categoryDiv = document.createElement('div');
+                        categoryDiv.className = 'bg-white p-4 rounded-md shadow-md border border-gray-200 dark:bg-gray-700 dark:border-gray-600';
+                        categoryDiv.innerHTML = `
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">ES: ${category.name}</h3>
+                                <button data-category-id="${category.id}" data-category-name="${category.name}"
+                                    class="delete-category-btn px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm">
+                                    Eliminar Categoría
+                                </button>
+                            </div>
+                            ${category.description ? `<p class="text-gray-600 text-sm mb-2 dark:text-gray-300">ES: ${category.description}</p>` : ''}
+                            ${category.name_en ? `<h4 class="text-lg font-semibold text-gray-700 dark:text-gray-200">EN: ${category.name_en}</h4>` : ''}
+                            ${category.description_en ? `<p class="text-gray-600 text-sm mb-2 dark:text-gray-300">EN: ${category.description_en}</p>` : ''}
+                            ${category.name_fr ? `<h4 class="text-lg font-semibold text-gray-700 dark:text-gray-200">FR: ${category.name_fr}</h4>` : ''}
+                            ${category.description_fr ? `<p class="text-gray-600 text-sm mb-4 dark:text-gray-300">FR: ${category.description_fr}</p>` : ''}
+                            <div class="items-list space-y-3">
+                            </div>
+                            <button data-category-id="${category.id}" data-category-name="${category.name}"
+                                class="open-add-menu-item-modal-btn w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 mt-4">
+                                Añadir Elemento a esta Categoría
+                            </button>
+                        `;
+
+                        const itemsListDiv = categoryDiv.querySelector('.items-list');
+                        if (category.items && category.items.length > 0) {
+                            category.items.forEach(item => {
+                                const itemDiv = document.createElement('div');
+                                itemDiv.className = 'bg-gray-50 p-3 rounded-md border border-gray-100 flex justify-between items-center dark:bg-gray-600 dark:border-gray-500';
+                                
+                                itemDiv.innerHTML = `
+                                    <div>
+                                        <p class="font-semibold text-gray-800 dark:text-gray-100">ES: ${item.name} 
+                                            ${item.price !== null && item.price !== undefined && item.price !== '' ? `<span class="text-gray-500 ml-2 text-sm dark:text-gray-400">$${item.price.toFixed(2)}</span>` : ''}
+                                        </p>
+                                        <p class="text-gray-600 text-sm dark:text-gray-300">ES: ${item.description || 'Sin descripción'}</p>
+                                        ${item.name_en ? `<p class="text-gray-700 text-sm dark:text-gray-200">EN: ${item.name_en}</p>` : ''}
+                                        ${item.description_en ? `<p class="text-gray-600 text-xs dark:text-gray-300">EN: ${item.description_en}</p>` : ''}
+                                        ${item.name_fr ? `<p class="text-gray-700 text-sm dark:text-gray-200">FR: ${item.name_fr}</p>` : ''}
+                                        ${item.description_fr ? `<p class="text-gray-600 text-xs dark:text-gray-300">FR: ${item.description_fr}</p>` : ''}
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button data-item-id="${item.id}" data-item-name="${item.name}"
+                                            class="delete-menu-item-btn px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm">
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                `;
+                                itemsListDiv.appendChild(itemDiv);
+                            });
+                        } else {
+                            itemsListDiv.innerHTML = '<p class="text-center text-gray-500 text-sm dark:text-gray-400">No hay elementos en esta categoría.</p>';
+                        }
+                        categoriesList.appendChild(categoryDiv);
+                    });
+
+                    // Asigna event listeners a los botones "Añadir Elemento a esta Categoría"
+                    document.querySelectorAll('.open-add-menu-item-modal-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const categoryId = e.target.dataset.categoryId;
+                            const categoryName = e.target.dataset.categoryName;
+                            modalAddMenuItemForm.dataset.categoryId = categoryId; // Establecer el ID de categoría en el formulario del modal
+                            modalMenuItemCategoryName.textContent = categoryName; // Mostrar el nombre de la categoría
+                            modalAddMenuItemForm.reset(); // Limpiar el formulario del modal
+                            showModal(addMenuItemModal);
+                        });
+                    });
+
+                    // Asigna event listeners a los botones "Eliminar"
+                    document.querySelectorAll('.delete-menu-item-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const itemId = parseInt(e.target.dataset.itemId);
+                            const itemName = e.target.dataset.itemName;
+                            showDeleteConfirmModal(itemId, itemName);
+                        });
+                    });
+
+                    // Asigna event listeners a los botones "Eliminar Categoría"
+                    document.querySelectorAll('.delete-category-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const categoryId = parseInt(e.target.dataset.categoryId);
+                            const categoryName = e.target.dataset.categoryName;
+                            showDeleteCategoryConfirmModal(categoryId, categoryName);
+                        });
+                    });
+                }
+            } else {
+                categoriesList.innerHTML = `<p class="text-center text-red-500">Error al cargar el menú: ${result.message}</p>`;
+            }
+            loadingCategories.classList.add('hidden');
+        }
+
+        // Event listener para el botón "Añadir Nueva Categoría" (abre modal)
+        openAddCategoryModalBtn.addEventListener('click', () => {
+            modalAddCategoryForm.reset(); // Limpiar el formulario del modal
+            showModal(addCategoryModal);
+        });
+
+        // Event listener para el formulario de añadir categoría (dentro del modal)
+        modalAddCategoryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentBusinessId || !currentUserId) {
+                showMessage('Error: Selecciona un Menú y asegúrate de estar logueado.', 'error');
+                return;
+            }
+            const formData = new FormData(modalAddCategoryForm);
+            const data = Object.fromEntries(formData.entries());
+            data.business_id = parseInt(currentBusinessId);
+            data.user_id = currentUserId;
+
+            const result = await apiFetch('addCategory', 'POST', data);
+            if (result.success) {
+                showMessage('Categoría añadida exitosamente!');
+                hideModal(addCategoryModal); // Ocultar el modal
+                loadMenuForBusiness(currentBusinessId); // Recargar categorías y elementos
+            } else {
+                showMessage(`Error al añadir categoría: ${result.message}`, 'error');
+            }
+        });
+
+        // Event listener para el formulario de añadir elemento de menú (dentro del modal)
+        modalAddMenuItemForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const categoryId = modalAddMenuItemForm.dataset.categoryId;
+            if (!currentUserId || !categoryId) {
+                showMessage('Error: ID de usuario o categoría no disponible.', 'error');
+                return;
+            }
+            const formData = new FormData(modalAddMenuItemForm);
+            const data = Object.fromEntries(formData.entries()); // Convertir FormData a objeto para JSON
+            data.category_id = parseInt(categoryId);
+            data.user_id = currentUserId;
+
+            // Manejar el precio: si está vacío, enviar '' para que PHP lo interprete como NULL
+            let priceInput = data.price;
+            if (priceInput === null || priceInput.trim() === '') {
+                data.price = '';
+            } else {
+                data.price = parseFloat(priceInput);
+            }
+
+            const result = await apiFetch('addMenuItem', 'POST', data); // Enviar como JSON
+            if (result.success) {
+                showMessage('Elemento de menú añadido!');
+                hideModal(addMenuItemModal); // Ocultar el modal
+                modalAddMenuItemForm.reset(); // Limpiar el formulario
+                loadMenuForBusiness(currentBusinessId); // Recargar menú completo
+            } else {
+                showMessage(`Error al añadir elemento: ${result.message}`, 'error');
+            }
+        });
+
+        /**
+         * Muestra el modal de confirmación para eliminar un elemento de menú.
+         * @param {number} itemId - El ID del elemento a eliminar.
+         * @param {string} itemName - El nombre del elemento a eliminar.
+         */
+        function showDeleteConfirmModal(itemId, itemName) {
+            itemToDelete = itemId; // Guarda el ID del item a eliminar
+            deleteItemNameSpan.textContent = itemName; // Muestra el nombre del item
+            showModal(deleteConfirmModal);
+        }
+
+        // Event listener para el botón "Cancelar" en el modal de confirmación de item
+        cancelDeleteBtn.addEventListener('click', () => {
+            hideModal(deleteConfirmModal);
+            itemToDelete = null; // Limpia el ID del item a eliminar
+        });
+
+        // Event listener para el botón "Eliminar" en el modal de confirmación de item
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (itemToDelete && currentUserId) {
+                const result = await apiFetch('deleteMenuItem', 'POST', { id: itemToDelete, user_id: currentUserId });
+                if (result.success) {
+                    showMessage('Elemento eliminado exitosamente!');
+                    hideModal(deleteConfirmModal);
+                    loadMenuForBusiness(currentBusinessId); // Recargar el menú
+                } else {
+                    showMessage(`Error al eliminar elemento: ${result.message}`, 'error');
+                }
+            } else {
+                showMessage('Error: No se pudo determinar el elemento a eliminar.', 'error');
+            }
+            itemToDelete = null; // Limpia el ID del item a eliminar
+        });
+
+        /**
+         * Muestra el modal de confirmación para eliminar un Menú.
+         * @param {number} businessId - El ID del Menú a eliminar.
+         * @param {string} businessName - El nombre del Menú a eliminar.
+         */
+        function showDeleteBusinessConfirmModal(businessId, businessName) {
+            businessToDelete = businessId; // Guarda el ID del Menú a eliminar
+            deleteBusinessNameSpan.textContent = businessName; // Muestra el nombre del Menú
+            showModal(deleteBusinessConfirmModal);
+        }
+
+        // Event listener para el botón "Cancelar" en el modal de confirmación de Menú
+        cancelDeleteBusinessBtn.addEventListener('click', () => {
+            hideModal(deleteBusinessConfirmModal);
+            businessToDelete = null; // Limpia el ID del Menú a eliminar
+        });
+
+        // Event listener para el botón "Eliminar Menú" en el modal de confirmación de Menú
+        confirmDeleteBusinessBtn.addEventListener('click', async () => {
+            if (businessToDelete && currentUserId) {
+                const result = await apiFetch('deleteBusiness', 'POST', { id: businessToDelete, user_id: currentUserId });
+                if (result.success) {
+                    showMessage('Menú y todos sus datos asociados eliminados exitosamente!', 'success');
+                    hideModal(deleteBusinessConfirmModal);
+                    showBusinessesSection(); // Recargar la lista de Menús
+                } else {
+                    showMessage(`Error al eliminar Menú: ${result.message}`, 'error');
+                }
+            } else {
+                showMessage('Error: No se pudo determinar el Menú a eliminar.', 'error');
+            }
+            businessToDelete = null; // Limpia el ID del Menú a eliminar
+        });
+
+        /**
+         * Muestra el modal de confirmación para eliminar una categoría.
+         * @param {number} categoryId - El ID de la categoría a eliminar.
+         * @param {string} categoryName - El nombre de la categoría a eliminar.
+         */
+        function showDeleteCategoryConfirmModal(categoryId, categoryName) {
+            categoryToDelete = categoryId; // Guarda el ID de la categoría a eliminar
+            deleteCategoryNameSpan.textContent = categoryName; // Muestra el nombre de la categoría
+            showModal(deleteCategoryConfirmModal);
+        }
+
+        // Event listener para el botón "Cancelar" en el modal de confirmación de categoría
+        cancelDeleteCategoryBtn.addEventListener('click', () => {
+            hideModal(deleteCategoryConfirmModal);
+            categoryToDelete = null; // Limpia el ID de la categoría a eliminar
+        });
+
+        // Event listener para el botón "Eliminar Categoría" en el modal de confirmación de categoría
+        confirmDeleteCategoryBtn.addEventListener('click', async () => {
+            if (categoryToDelete && currentUserId) {
+                const result = await apiFetch('deleteCategory', 'POST', { id: categoryToDelete, user_id: currentUserId });
+                if (result.success) {
+                    showMessage('Categoría y todos sus elementos asociados eliminados exitosamente!', 'success');
+                    hideModal(deleteCategoryConfirmModal);
+                    loadMenuForBusiness(currentBusinessId); // Recargar el menú
+                } else {
+                    showMessage(`Error al eliminar categoría: ${result.message}`, 'error');
+                }
+            } else {
+                showMessage('Error: No se pudo determinar la categoría a eliminar.', 'error');
+            }
+            categoryToDelete = null; // Limpia el ID de la categoría a eliminar
+        });
+
+
+        // --- Funciones de Vista Pública ---
+        /**
+         * Determina el idioma a mostrar basándose en el idioma del navegador.
+         * @returns {string} El código de idioma soportado ('es', 'en', 'fr') o 'en' por defecto.
+         */
+        function getDisplayLanguage() {
+            const supportedLangs = ['es', 'en', 'fr'];
+            const defaultLang = 'en'; // Idioma por defecto
+
+            // Itera sobre los idiomas preferidos del navegador
+            if (navigator.languages && navigator.languages.length > 0) {
+                for (const lang of navigator.languages) {
+                    const baseLang = lang.split('-')[0].toLowerCase(); // Obtiene la parte principal (ej. 'es' de 'es-ES')
+                    if (supportedLangs.includes(baseLang)) {
+                        return baseLang;
+                    }
+                }
+            }
+
+            // Si no se encuentra un idioma soportado en navigator.languages, intenta con navigator.language
+            const browserLang = navigator.language.split('-')[0].toLowerCase();
+            if (supportedLangs.includes(browserLang)) {
+                return browserLang;
+            }
+
+            return defaultLang; // Retorna el idioma por defecto si no se encuentra ninguno soportado
+        }
+
+        /**
+         * Obtiene el nombre o descripción de un elemento en el idioma deseado, con fallback.
+         * @param {object} item - El objeto que contiene los textos en diferentes idiomas.
+         * @param {string} type - El tipo de texto a obtener ('name' o 'description').
+         * @param {string} lang - El idioma deseado ('es', 'en', 'fr').
+         * @returns {string} El texto localizado o una cadena vacía si no se encuentra.
+         */
+        function getLocalizedText(item, type, lang) {
+            const requestedLangField = `${type}_${lang}`; // e.g., 'name_es', 'description_en'
+            const spanishField = type; // Original field, assumed Spanish
+            const englishField = `${type}_en`;
+            const frenchField = `${type}_fr`;
+
+            // Prioridad: idioma solicitado -> español -> inglés -> francés
+            if (item[requestedLangField] && item[requestedLangField].trim() !== '') {
+                return item[requestedLangField];
+            }
+            if (item[spanishField] && item[spanishField].trim() !== '') { // Check original field (ES)
+                return item[spanishField];
+            }
+            if (item[englishField] && item[englishField].trim() !== '') { // Check EN
+                return item[englishField];
+            }
+            if (item[frenchField] && item[frenchField].trim() !== '') { // Check FR
+                return item[frenchField];
+            }
+            
+            return ''; // Return empty string if no valid text is found
+        }
+
+
+        // Event listener para el botón "Ver Menús Públicos"
+        viewPublicMenusBtn.addEventListener('click', () => showPublicMenuViewerSection());
+        // Event listener para el botón "Volver a Inicio" desde la vista pública
+        backFromPublicMenuBtn.addEventListener('click', showAuthSection);
+
+        /**
+         * Carga los Menús disponibles públicamente en el selector de la vista pública.
+         * @param {number|null} preselectedBusinessId - ID del Menú a preseleccionar (opcional).
+         */
+        async function loadPublicBusinessesIntoSelector(preselectedBusinessId = null) {
+            publicBusinessSelect.innerHTML = '<option value="">-- Selecciona un Menú --</option>';
+            loadingPublicMenu.textContent = 'Cargando Menús...';
+            publicMenuDisplay.innerHTML = ''; // Limpia el display del menú
+
+            const result = await apiFetch('getPublicBusinesses', 'GET');
+
+            if (result.success && result.data.length > 0) {
+                result.data.forEach(business => {
+                    const option = document.createElement('option');
+                    option.value = business.id;
+                    option.textContent = business.name;
+                    publicBusinessSelect.appendChild(option);
+                });
+                loadingPublicMenu.textContent = 'Selecciona un Menú para ver su menú.';
+
+                // Si hay un ID preseleccionado en la URL, lo selecciona y carga el menú
+                if (preselectedBusinessId) {
+                    publicBusinessSelect.value = preselectedBusinessId;
+                    publicBusinessSelect.dispatchEvent(new Event('change')); // Dispara el evento change
+                }
+            } else if (result.success && result.data.length === 0) {
+                loadingPublicMenu.textContent = 'No hay Menús disponibles públicamente.';
+            } else {
+                loadingPublicMenu.textContent = `Error al cargar Menús públicos: ${result.message}`;
+            }
+        }
+
+        // Event listener para el cambio de selección en el selector de Menús públicos
+        publicBusinessSelect.addEventListener('change', async (e) => {
+            const businessId = e.target.value;
+            publicMenuDisplay.innerHTML = ''; // Limpia el display del menú
+
+            if (businessId) {
+                loadingPublicMenu.textContent = 'Cargando menú...';
+                publicMenuDisplay.appendChild(loadingPublicMenu);
+
+                // Obtiene el nombre del Menú seleccionado para mostrarlo como título
+                const selectedBusinessName = publicBusinessSelect.options[publicBusinessSelect.selectedIndex].textContent;
+
+                const result = await apiFetch('getPublicMenuByBusiness', 'GET', null, { business_id: businessId });
+
+                if (result.success) {
+                    if (result.data.length === 0) {
+                        publicMenuDisplay.innerHTML = `<h3 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4 dark:text-gray-100">${selectedBusinessName}</h3><p class="text-center text-gray-500 dark:text-gray-400">Este Menú no tiene un menú público disponible o sus elementos no están marcados como disponibles.</p>`;
+                    } else {
+                        publicMenuDisplay.innerHTML = `<h3 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-6 dark:text-gray-100">${selectedBusinessName}</h3>`;
+                        let hasVisibleItems = false; // Bandera para verificar si hay categorías con elementos
+                        const displayLang = getDisplayLanguage(); // Obtener el idioma de visualización
+
+                        result.data.forEach(category => {
+                            // Solo muestra la categoría si tiene elementos disponibles
+                            if (category.items && category.items.length > 0) {
+                                hasVisibleItems = true;
+                                const categoryDiv = document.createElement('div');
+                                categoryDiv.className = 'bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200 dark:bg-gray-700 dark:border-gray-600';
+                                categoryDiv.innerHTML = `
+                                    <h4 class="text-xl sm:text-2xl font-bold text-gray-800 mb-2 dark:text-gray-100">${getLocalizedText(category, 'name', displayLang)}</h4>
+                                    ${getLocalizedText(category, 'description', displayLang) ? `<p class="text-gray-600 mb-4 text-sm dark:text-gray-300">${getLocalizedText(category, 'description', displayLang)}</p>` : ''}
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-list">
+                                    </div>
+                                `;
+                                const itemsListDiv = categoryDiv.querySelector('.items-list');
+                                category.items.forEach(item => {
+                                    const itemDiv = document.createElement('div');
+                                    itemDiv.className = 'bg-gray-50 p-3 rounded-md shadow-sm border border-gray-100 flex items-start dark:bg-gray-600 dark:border-gray-500'; // Alineado al inicio
+
+                                    itemDiv.innerHTML = `
+                                        <div>
+                                            <p class="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-100">${getLocalizedText(item, 'name', displayLang)}</p>
+                                            ${getLocalizedText(item, 'description', displayLang) ? `<p class="text-gray-600 text-xs sm:text-sm dark:text-gray-300">${getLocalizedText(item, 'description', displayLang)}</p>` : ''}
+                                            ${item.price !== null && item.price !== undefined && item.price !== '' ? `<p class="text-indigo-700 font-bold mt-1 text-base sm:text-lg dark:text-indigo-400">$${item.price.toFixed(2)}</p>` : ''}
+                                        </div>
+                                    `;
+                                    itemsListDiv.appendChild(itemDiv);
+                                });
+                                publicMenuDisplay.appendChild(categoryDiv);
+                            }
+                        });
+
+                        if (!hasVisibleItems) {
+                            publicMenuDisplay.innerHTML = `<h3 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4 dark:text-gray-100">${selectedBusinessName}</h3><p class="text-center text-gray-500 dark:text-gray-400">Este Menú no tiene elementos de menú disponibles públicamente en ninguna categoría.</p>`;
+                        }
+                    }
+                } else {
+                    publicMenuDisplay.innerHTML = `<p class="text-center text-red-500">Error al cargar el menú: ${result.message}</p>`;
+                }
+            } else {
+                publicMenuDisplay.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400">Selecciona un Menú para ver su menú.</p>';
+            }
+        });
+
+
+        // Inicialización: Comprobar si ya hay una sesión o un enlace público
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewMenuId = urlParams.get('view_menu');
+
+            if (viewMenuId) {
+                // Si hay un parámetro 'view_menu' en la URL, mostrar la vista pública directamente
+                showPublicMenuViewerSection(viewMenuId);
+            } else if (loadAuthData()) {
+                // Si no hay parámetro y hay datos de autenticación, mostrar la sección de Menús
+                showBusinessesSection();
+            } else {
+                // Si no hay parámetro ni datos de autenticación, mostrar la sección de autenticación
+                showAuthSection();
+            }
+        });
+    </script>
+</body>
+</html>
