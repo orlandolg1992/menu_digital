@@ -280,6 +280,60 @@
         </div>
     </div>
 
+    <div id="editMenuItemModal" class="modal-overlay hidden">
+        <div class="modal-content p-4 sm:p-6">
+            <button class="modal-close-btn" data-modal-id="editMenuItemModal">&times;</button>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4 dark:text-gray-200">Editar Elemento: <span id="editModalMenuItemNameSpan" class="font-bold"></span></h3>
+            <form id="modalEditMenuItemForm" class="space-y-4" data-item-id="">
+                <div>
+                    <label for="editModalItemNameInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre (ES):</label>
+                    <input type="text" id="editModalItemNameInput" name="name" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="editModalItemDescriptionInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (ES):</label>
+                    <textarea id="editModalItemDescriptionInput" name="description" rows="1"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <div>
+                    <label for="editModalItemNameEnInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre (EN):</label>
+                    <input type="text" id="editModalItemNameEnInput" name="name_en"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="editModalItemDescriptionEnInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (EN):</label>
+                    <textarea id="editModalItemDescriptionEnInput" name="description_en" rows="1"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <div>
+                    <label for="editModalItemNameFrInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre (FR):</label>
+                    <input type="text" id="editModalItemNameFrInput" name="name_fr"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="editModalItemDescriptionFrInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción (FR):</label>
+                    <textarea id="editModalItemDescriptionFrInput" name="description_fr" rows="1"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500"></textarea>
+                </div>
+                <div>
+                    <label for="editModalItemPriceInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio (opcional):</label>
+                    <input type="number" id="editModalItemPriceInput" name="price" placeholder="Precio (ej. 12.50)" step="0.01"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                </div>
+                <div>
+                    <label for="editModalItemAvailableInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Disponible:</label>
+                    <input type="checkbox" id="editModalItemAvailableInput" name="is_available" value="1" checked
+                           class="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-500 dark:bg-gray-700">
+                </div>
+                <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Guardar Cambios
+                </button>
+            </form>
+        </div>
+    </div>
+
+
     <div id="deleteConfirmModal" class="modal-overlay hidden">
         <div class="modal-content p-4 sm:p-6 max-w-sm">
             <button class="modal-close-btn" data-modal-id="deleteConfirmModal">&times;</button>
@@ -360,6 +414,20 @@
         const addMenuItemModal = document.getElementById('addMenuItemModal');
         const modalAddMenuItemForm = document.getElementById('modalAddMenuItemForm');
         const modalMenuItemCategoryName = document.getElementById('modalMenuItemCategoryName');
+
+        // Nuevas referencias para el modal de edición de elementos de menú
+        const editMenuItemModal = document.getElementById('editMenuItemModal');
+        const modalEditMenuItemForm = document.getElementById('modalEditMenuItemForm');
+        const editModalMenuItemNameSpan = document.getElementById('editModalMenuItemNameSpan'); // Renombrado para evitar conflicto
+        const editModalItemNameInput = document.getElementById('editModalItemNameInput'); // Renombrado
+        const editModalItemDescriptionInput = document.getElementById('editModalItemDescriptionInput'); // Renombrado
+        const editModalItemNameEnInput = document.getElementById('editModalItemNameEnInput'); // Renombrado
+        const editModalItemDescriptionEnInput = document.getElementById('editModalItemDescriptionEnInput'); // Renombrado
+        const editModalItemNameFrInput = document.getElementById('editModalItemNameFrInput'); // Renombrado
+        const editModalItemDescriptionFrInput = document.getElementById('editModalItemDescriptionFrInput'); // Renombrado
+        const editModalItemPriceInput = document.getElementById('editModalItemPriceInput'); // Renombrado
+        const editModalItemAvailableInput = document.getElementById('editModalItemAvailableInput'); // Renombrado
+
 
         const deleteConfirmModal = document.getElementById('deleteConfirmModal');
         const deleteItemNameSpan = document.getElementById('deleteItemName');
@@ -817,6 +885,18 @@
                                         ${item.description_fr ? `<p class="text-gray-600 text-xs dark:text-gray-300">FR: ${item.description_fr}</p>` : ''}
                                     </div>
                                     <div class="flex items-center space-x-2">
+                                        <button data-item-id="${item.id}"
+                                                data-item-name="${item.name}"
+                                                data-item-description="${item.description || ''}"
+                                                data-item-name-en="${item.name_en || ''}"
+                                                data-item-description-en="${item.description_en || ''}"
+                                                data-item-name-fr="${item.name_fr || ''}"
+                                                data-item-description-fr="${item.description_fr || ''}"
+                                                data-item-price="${item.price !== null ? item.price : ''}"
+                                                data-item-available="${item.is_available}"
+                                            class="edit-menu-item-btn px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm">
+                                            Editar
+                                        </button>
                                         <button data-item-id="${item.id}" data-item-name="${item.name}"
                                             class="delete-menu-item-btn px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm">
                                             Eliminar
@@ -842,6 +922,15 @@
                             showModal(addMenuItemModal);
                         });
                     });
+
+                    // Asigna event listeners a los botones "Editar"
+                    document.querySelectorAll('.edit-menu-item-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const itemData = e.target.dataset;
+                            showEditMenuItemModal(itemData);
+                        });
+                    });
+
 
                     // Asigna event listeners a los botones "Eliminar"
                     document.querySelectorAll('.delete-menu-item-btn').forEach(button => {
@@ -926,6 +1015,63 @@
                 showMessage(`Error al añadir elemento: ${result.message}`, 'error');
             }
         });
+
+        /**
+         * Muestra el modal de edición de elementos de menú y precarga los datos.
+         * @param {object} itemData - Objeto con los datos del elemento a editar.
+         */
+        function showEditMenuItemModal(itemData) {
+            modalEditMenuItemForm.dataset.itemId = itemData.itemId;
+            editModalMenuItemNameSpan.textContent = itemData.itemName; // Título del modal
+
+            // Precargar los campos del formulario
+            editModalItemNameInput.value = itemData.itemName;
+            editModalItemDescriptionInput.value = itemData.itemDescription;
+            editModalItemNameEnInput.value = itemData.itemNameEn;
+            editModalItemDescriptionEnInput.value = itemData.itemDescriptionEn;
+            editModalItemNameFrInput.value = itemData.itemNameFr;
+            editModalItemDescriptionFrInput.value = itemData.itemDescriptionFr;
+            editModalItemPriceInput.value = itemData.itemPrice !== null ? itemData.itemPrice : ''; // Asegura que el precio sea numérico o vacío
+            editModalItemAvailableInput.checked = itemData.itemAvailable === '1'; // Checkbox
+
+            showModal(editMenuItemModal);
+        }
+
+        // Event listener para el formulario de edición de elemento de menú
+        modalEditMenuItemForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const itemId = modalEditMenuItemForm.dataset.itemId;
+            if (!currentUserId || !itemId) {
+                showMessage('Error: ID de usuario o elemento no disponible para editar.', 'error');
+                return;
+            }
+
+            const formData = new FormData(modalEditMenuItemForm);
+            const data = Object.fromEntries(formData.entries());
+            data.id = parseInt(itemId);
+            data.user_id = currentUserId;
+
+            // Manejar el precio: si está vacío, enviar '' para que PHP lo interprete como NULL
+            let priceInput = data.price;
+            if (priceInput === null || priceInput.trim() === '') {
+                data.price = '';
+            } else {
+                data.price = parseFloat(priceInput);
+            }
+
+            // Manejar el checkbox is_available
+            data.is_available = editModalItemAvailableInput.checked ? 1 : 0;
+
+            const result = await apiFetch('updateMenuItem', 'POST', data);
+            if (result.success) {
+                showMessage('Elemento de menú actualizado exitosamente!');
+                hideModal(editMenuItemModal);
+                loadMenuForBusiness(currentBusinessId); // Recargar menú completo
+            } else {
+                showMessage(`Error al actualizar elemento: ${result.message}`, 'error');
+            }
+        });
+
 
         /**
          * Muestra el modal de confirmación para eliminar un elemento de menú.
