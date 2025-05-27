@@ -67,6 +67,87 @@
                 color: #a0aec0; /* gray-400 en oscuro */
             }
         }
+
+        /* Estilos para el Carrusel de Imágenes */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 150px; /* Altura fija para las imágenes del carrusel */
+            overflow: hidden;
+            border-radius: 0.5rem;
+            background-color: #e2e8f0; /* Fondo para el carrusel */
+        }
+
+        .carousel-slides {
+            display: flex;
+            height: 100%;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .carousel-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Asegura que la imagen cubra el área sin distorsionarse */
+            border-radius: 0.5rem;
+        }
+
+        .carousel-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 9999px; /* Fully rounded */
+            cursor: pointer;
+            font-size: 1.25rem;
+            line-height: 1;
+            z-index: 10;
+            transition: background-color 0.3s ease;
+        }
+
+        .carousel-nav-btn:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .carousel-nav-btn.prev-btn {
+            left: 0.5rem;
+        }
+
+        .carousel-nav-btn.next-btn {
+            right: 0.5rem;
+        }
+
+        .carousel-dots {
+            position: absolute;
+            bottom: 0.5rem;
+            width: 100%;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 9999px;
+            background-color: rgba(255, 255, 255, 0.5);
+            margin: 0 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .dot.active {
+            background-color: white;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-8 dark:bg-gray-900">
@@ -272,6 +353,11 @@
                     <input type="number" id="modalMenuItemPrice" name="price" placeholder="Precio (ej. 12.50)" step="0.01"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
                 </div>
+                <div>
+                    <label for="modalMenuItemImages" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Subir Imágenes (opcional):</label>
+                    <input type="file" id="modalMenuItemImages" name="images[]" multiple accept="image/*"
+                           class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-300 dark:file:bg-gray-700 dark:file:text-blue-300 dark:hover:file:bg-gray-600">
+                </div>
                 <button type="submit"
                         class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Añadir Elemento
@@ -325,6 +411,14 @@
                     <input type="checkbox" id="editModalItemAvailableInput" name="is_available" value="1" checked
                            class="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-500 dark:bg-gray-700">
                 </div>
+                <div>
+                    <label for="editModalItemImagesInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Subir Nuevas Imágenes (reemplazará las existentes, opcional):</label>
+                    <input type="file" id="editModalItemImagesInput" name="images[]" multiple accept="image/*"
+                           class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-300 dark:file:bg-gray-700 dark:file:text-blue-300 dark:hover:file:bg-gray-600">
+                    <p class="text-xs text-gray-500 mt-1 dark:text-gray-400">Las imágenes existentes se eliminarán al subir nuevas.</p>
+                </div>
+                <div id="currentImagesPreview" class="flex flex-wrap gap-2 mt-2">
+                    </div>
                 <button type="submit"
                         class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Guardar Cambios
@@ -414,6 +508,7 @@
         const addMenuItemModal = document.getElementById('addMenuItemModal');
         const modalAddMenuItemForm = document.getElementById('modalAddMenuItemForm');
         const modalMenuItemCategoryName = document.getElementById('modalMenuItemCategoryName');
+        const modalMenuItemImagesInput = document.getElementById('modalMenuItemImages'); // Nuevo
 
         // Nuevas referencias para el modal de edición de elementos de menú
         const editMenuItemModal = document.getElementById('editMenuItemModal');
@@ -427,6 +522,8 @@
         const editModalItemDescriptionFrInput = document.getElementById('editModalItemDescriptionFrInput'); // Renombrado
         const editModalItemPriceInput = document.getElementById('editModalItemPriceInput'); // Renombrado
         const editModalItemAvailableInput = document.getElementById('editModalItemAvailableInput'); // Renombrado
+        const editModalItemImagesInput = document.getElementById('editModalItemImagesInput'); // Nuevo
+        const currentImagesPreview = document.getElementById('currentImagesPreview'); // Nuevo para previsualización de imágenes existentes
 
 
         const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -480,7 +577,7 @@
          * Realiza llamadas a la API PHP.
          * @param {string} action - La acción de la API a llamar.
          * @param {string} method - El método HTTP ('GET', 'POST').
-         * @param {object} body - El cuerpo de la solicitud (objeto JSON).
+         * @param {object|FormData} body - El cuerpo de la solicitud (objeto JSON o FormData).
          * @param {object} params - Parámetros de consulta adicionales.
          * @returns {Promise<object>} La respuesta JSON de la API.
          */
@@ -503,8 +600,14 @@
 
             // Añade el cuerpo de la solicitud para métodos POST/PUT
             if (body) {
-                options.headers = { 'Content-Type': 'application/json' };
-                options.body = JSON.stringify(body);
+                if (body instanceof FormData) {
+                    // Si es FormData (para subida de archivos), no establecer Content-Type
+                    options.body = body;
+                } else {
+                    // Si es JSON, establecer Content-Type
+                    options.headers = { 'Content-Type': 'application/json' };
+                    options.body = JSON.stringify(body);
+                }
             }
             try {
                 const response = await fetch(url, options);
@@ -871,10 +974,19 @@
                         if (category.items && category.items.length > 0) {
                             category.items.forEach(item => {
                                 const itemDiv = document.createElement('div');
-                                itemDiv.className = 'bg-gray-50 p-3 rounded-md border border-gray-100 flex justify-between items-center dark:bg-gray-600 dark:border-gray-500';
+                                itemDiv.className = 'bg-gray-50 p-3 rounded-md border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center dark:bg-gray-600 dark:border-gray-500';
                                 
+                                let imagesHtml = '';
+                                if (item.images && item.images.length > 0) {
+                                    imagesHtml = `<div class="flex flex-wrap gap-2 mt-2 sm:mt-0 sm:ml-4">`;
+                                    item.images.forEach(imgUrl => {
+                                        imagesHtml += `<img src="${imgUrl}" alt="[Image of ${item.name}]" class="w-16 h-16 object-cover rounded-md shadow-sm">`;
+                                    });
+                                    imagesHtml += `</div>`;
+                                }
+
                                 itemDiv.innerHTML = `
-                                    <div>
+                                    <div class="flex-grow">
                                         <p class="font-semibold text-gray-800 dark:text-gray-100">ES: ${item.name} 
                                             ${item.price !== null && item.price !== undefined && item.price !== '' ? `<span class="text-gray-500 ml-2 text-sm dark:text-gray-400">$${item.price.toFixed(2)}</span>` : ''}
                                         </p>
@@ -884,7 +996,8 @@
                                         ${item.name_fr ? `<p class="text-gray-700 text-sm dark:text-gray-200">FR: ${item.name_fr}</p>` : ''}
                                         ${item.description_fr ? `<p class="text-gray-600 text-xs dark:text-gray-300">FR: ${item.description_fr}</p>` : ''}
                                     </div>
-                                    <div class="flex items-center space-x-2">
+                                    <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 mt-2 sm:mt-0">
+                                        ${imagesHtml}
                                         <button data-item-id="${item.id}"
                                                 data-item-name="${item.name}"
                                                 data-item-description="${item.description || ''}"
@@ -894,11 +1007,12 @@
                                                 data-item-description-fr="${item.description_fr || ''}"
                                                 data-item-price="${item.price !== null ? item.price : ''}"
                                                 data-item-available="${item.is_available}"
-                                            class="edit-menu-item-btn px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm">
+                                                data-item-images="${(item.images || []).join(',')}"
+                                            class="edit-menu-item-btn px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm w-full sm:w-auto">
                                             Editar
                                         </button>
                                         <button data-item-id="${item.id}" data-item-name="${item.name}"
-                                            class="delete-menu-item-btn px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm">
+                                            class="delete-menu-item-btn px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm w-full sm:w-auto">
                                             Eliminar
                                         </button>
                                     </div>
@@ -992,20 +1106,28 @@
                 showMessage('Error: ID de usuario o categoría no disponible.', 'error');
                 return;
             }
-            const formData = new FormData(modalAddMenuItemForm);
-            const data = Object.fromEntries(formData.entries()); // Convertir FormData a objeto para JSON
-            data.category_id = parseInt(categoryId);
-            data.user_id = currentUserId;
 
-            // Manejar el precio: si está vacío, enviar '' para que PHP lo interprete como NULL
-            let priceInput = data.price;
-            if (priceInput === null || priceInput.trim() === '') {
-                data.price = '';
-            } else {
-                data.price = parseFloat(priceInput);
+            // Crear FormData para enviar archivos y otros datos
+            const formData = new FormData();
+            formData.append('category_id', parseInt(categoryId));
+            formData.append('user_id', currentUserId);
+            formData.append('name', document.getElementById('modalMenuItemName').value.trim());
+            formData.append('description', document.getElementById('modalMenuItemDescription').value.trim());
+            formData.append('name_en', document.getElementById('modalMenuItemNameEn').value.trim());
+            formData.append('description_en', document.getElementById('modalMenuItemDescriptionEn').value.trim());
+            formData.append('name_fr', document.getElementById('modalMenuItemNameFr').value.trim());
+            formData.append('description_fr', document.getElementById('modalMenuItemDescriptionFr').value.trim());
+
+            let priceInput = document.getElementById('modalMenuItemPrice').value;
+            formData.append('price', (priceInput === null || priceInput.trim() === '') ? '' : parseFloat(priceInput));
+
+            // Añadir archivos de imagen
+            const imageFiles = modalMenuItemImagesInput.files;
+            for (let i = 0; i < imageFiles.length; i++) {
+                formData.append('images[]', imageFiles[i]);
             }
 
-            const result = await apiFetch('addMenuItem', 'POST', data); // Enviar como JSON
+            const result = await apiFetch('addMenuItem', 'POST', formData); // Enviar como FormData
             if (result.success) {
                 showMessage('Elemento de menú añadido!');
                 hideModal(addMenuItemModal); // Ocultar el modal
@@ -1034,6 +1156,22 @@
             editModalItemPriceInput.value = itemData.itemPrice !== null ? itemData.itemPrice : ''; // Asegura que el precio sea numérico o vacío
             editModalItemAvailableInput.checked = itemData.itemAvailable === '1'; // Checkbox
 
+            // Limpiar y mostrar previsualización de imágenes existentes
+            currentImagesPreview.innerHTML = '';
+            if (itemData.itemImages) {
+                const existingImageUrls = itemData.itemImages.split(',').filter(url => url.trim() !== '');
+                existingImageUrls.forEach(url => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.alt = `[Image of ${itemData.itemName}]`;
+                    img.className = 'w-20 h-20 object-cover rounded-md shadow-sm';
+                    currentImagesPreview.appendChild(img);
+                });
+            }
+
+            // Limpiar el input de tipo file
+            editModalItemImagesInput.value = '';
+
             showModal(editMenuItemModal);
         }
 
@@ -1046,23 +1184,27 @@
                 return;
             }
 
-            const formData = new FormData(modalEditMenuItemForm);
-            const data = Object.fromEntries(formData.entries());
-            data.id = parseInt(itemId);
-            data.user_id = currentUserId;
+            const formData = new FormData();
+            formData.append('id', parseInt(itemId));
+            formData.append('user_id', currentUserId);
+            formData.append('name', editModalItemNameInput.value.trim());
+            formData.append('description', editModalItemDescriptionInput.value.trim());
+            formData.append('name_en', editModalItemNameEnInput.value.trim());
+            formData.append('description_en', editModalItemDescriptionEnInput.value.trim());
+            formData.append('name_fr', editModalItemNameFrInput.value.trim());
+            formData.append('description_fr', editModalItemDescriptionFrInput.value.trim());
 
-            // Manejar el precio: si está vacío, enviar '' para que PHP lo interprete como NULL
-            let priceInput = data.price;
-            if (priceInput === null || priceInput.trim() === '') {
-                data.price = '';
-            } else {
-                data.price = parseFloat(priceInput);
+            let priceInput = editModalItemPriceInput.value;
+            formData.append('price', (priceInput === null || priceInput.trim() === '') ? '' : parseFloat(priceInput));
+            formData.append('is_available', editModalItemAvailableInput.checked ? 1 : 0);
+
+            // Añadir archivos de imagen (si se seleccionaron nuevos)
+            const newImageFiles = editModalItemImagesInput.files;
+            for (let i = 0; i < newImageFiles.length; i++) {
+                formData.append('images[]', newImageFiles[i]);
             }
 
-            // Manejar el checkbox is_available
-            data.is_available = editModalItemAvailableInput.checked ? 1 : 0;
-
-            const result = await apiFetch('updateMenuItem', 'POST', data);
+            const result = await apiFetch('updateMenuItem', 'POST', formData);
             if (result.success) {
                 showMessage('Elemento de menú actualizado exitosamente!');
                 hideModal(editMenuItemModal);
@@ -1272,6 +1414,38 @@
             }
         }
 
+        // Variable global para almacenar los índices de las diapositivas de cada carrusel
+        const carouselStates = {};
+
+        /**
+         * Muestra una diapositiva específica en un carrusel.
+         * @param {HTMLElement} carouselSlidesContainer - El contenedor de las diapositivas del carrusel.
+         * @param {number} slideIndex - El índice de la diapositiva a mostrar.
+         * @param {string} itemId - El ID del elemento al que pertenece el carrusel.
+         */
+        function showSlide(carouselSlidesContainer, slideIndex, itemId) {
+            const slides = carouselSlidesContainer.querySelectorAll('.carousel-slide');
+            const dotsContainer = carouselSlidesContainer.nextElementSibling; // Asume que los puntos están justo después
+            const dots = dotsContainer ? dotsContainer.querySelectorAll('.dot') : [];
+
+            if (slideIndex >= slides.length) {
+                slideIndex = 0;
+            } else if (slideIndex < 0) {
+                slideIndex = slides.length - 1;
+            }
+
+            carouselSlidesContainer.style.transform = `translateX(-${slideIndex * 100}%)`;
+            carouselStates[itemId] = slideIndex; // Actualiza el estado global
+
+            dots.forEach((dot, index) => {
+                if (index === slideIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
         // Event listener para el cambio de selección en el selector de Menús públicos
         publicBusinessSelect.addEventListener('change', async (e) => {
             const businessId = e.target.value;
@@ -1309,13 +1483,39 @@
                                 const itemsListDiv = categoryDiv.querySelector('.items-list');
                                 category.items.forEach(item => {
                                     const itemDiv = document.createElement('div');
-                                    itemDiv.className = 'bg-gray-50 p-3 rounded-md shadow-sm border border-gray-100 flex items-start dark:bg-gray-600 dark:border-gray-500'; // Alineado al inicio
+                                    itemDiv.className = 'bg-gray-50 p-3 rounded-md shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start dark:bg-gray-600 dark:border-gray-500'; // Alineado al inicio
+
+                                    let imagesHtml = '';
+                                    if (item.images && item.images.length > 0) {
+                                        if (item.images.length > 1) {
+                                            // Carousel structure
+                                            imagesHtml = `
+                                                <div class="carousel-container relative w-full sm:w-48 h-32 overflow-hidden rounded-md shadow-sm">
+                                                    <div class="carousel-slides flex h-full" data-item-id="${item.id}">`;
+                                            item.images.forEach(imgUrl => {
+                                                imagesHtml += `<div class="carousel-slide"><img src="${imgUrl}" alt="[Image of ${getLocalizedText(item, 'name', displayLang)}]" onerror="this.onerror=null;this.src='https://placehold.co/150x150/cccccc/333333?text=No+Image';"></div>`;
+                                            });
+                                            imagesHtml += `
+                                                    </div>
+                                                    <button class="carousel-nav-btn prev-btn">‹</button>
+                                                    <button class="carousel-nav-btn next-btn">›</button>
+                                                    <div class="carousel-dots"></div>
+                                                </div>
+                                            `;
+                                        } else {
+                                            // Single image
+                                            imagesHtml = `<img src="${item.images[0]}" alt="[Image of ${getLocalizedText(item, 'name', displayLang)}]" class="w-full sm:w-48 h-32 object-cover rounded-md shadow-sm flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/150x150/cccccc/333333?text=No+Image';">`;
+                                        }
+                                    }
 
                                     itemDiv.innerHTML = `
-                                        <div>
+                                        <div class="flex-grow">
                                             <p class="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-100">${getLocalizedText(item, 'name', displayLang)}</p>
                                             ${getLocalizedText(item, 'description', displayLang) ? `<p class="text-gray-600 text-xs sm:text-sm dark:text-gray-300">${getLocalizedText(item, 'description', displayLang)}</p>` : ''}
                                             ${item.price !== null && item.price !== undefined && item.price !== '' ? `<p class="text-indigo-700 font-bold mt-1 text-base sm:text-lg dark:text-indigo-400">$${item.price.toFixed(2)}</p>` : ''}
+                                        </div>
+                                        <div class="flex-shrink-0 w-full sm:w-48 mt-2 sm:mt-0 sm:ml-4">
+                                            ${imagesHtml}
                                         </div>
                                     `;
                                     itemsListDiv.appendChild(itemDiv);
@@ -1323,6 +1523,45 @@
                                 publicMenuDisplay.appendChild(categoryDiv);
                             }
                         });
+
+                        // Initialize carousels after all items are added to the DOM
+                        document.querySelectorAll('.carousel-container').forEach(carouselContainer => {
+                            const slidesContainer = carouselContainer.querySelector('.carousel-slides');
+                            const itemId = slidesContainer.dataset.itemId;
+                            const slides = slidesContainer.querySelectorAll('.carousel-slide');
+                            const prevBtn = carouselContainer.querySelector('.prev-btn');
+                            const nextBtn = carouselContainer.querySelector('.next-btn');
+                            const dotsContainer = carouselContainer.querySelector('.carousel-dots');
+
+                            if (slides.length > 1) {
+                                // Create dots
+                                for (let i = 0; i < slides.length; i++) {
+                                    const dot = document.createElement('span');
+                                    dot.classList.add('dot');
+                                    dot.dataset.slideIndex = i;
+                                    dot.addEventListener('click', () => showSlide(slidesContainer, i, itemId));
+                                    dotsContainer.appendChild(dot);
+                                }
+
+                                // Initialize current slide for this carousel
+                                carouselStates[itemId] = 0;
+                                showSlide(slidesContainer, 0, itemId); // Show the first slide
+
+                                // Add navigation button listeners
+                                prevBtn.addEventListener('click', () => {
+                                    showSlide(slidesContainer, carouselStates[itemId] - 1, itemId);
+                                });
+                                nextBtn.addEventListener('click', () => {
+                                    showSlide(slidesContainer, carouselStates[itemId] + 1, itemId);
+                                });
+                            } else {
+                                // Hide navigation buttons and dots if only one image
+                                if (prevBtn) prevBtn.classList.add('hidden');
+                                if (nextBtn) nextBtn.classList.add('hidden');
+                                if (dotsContainer) dotsContainer.classList.add('hidden');
+                            }
+                        });
+
 
                         if (!hasVisibleItems) {
                             publicMenuDisplay.innerHTML = `<h3 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4 dark:text-gray-100">${selectedBusinessName}</h3><p class="text-center text-gray-500 dark:text-gray-400">Este Menú no tiene elementos de menú disponibles públicamente en ninguna categoría.</p>`;
