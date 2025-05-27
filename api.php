@@ -376,6 +376,69 @@ try {
             echo json_encode(['success' => true, 'message' => 'Elemento de menú añadido exitosamente.', 'id' => $pdo->lastInsertId()]);
             break;
 
+        case 'updateMenuItem':
+            if ($method !== 'POST') throw new Exception('Método no permitido para esta acción.');
+            if (!isset($input['user_id']) || !isset($input['id'])) {
+                throw new Exception('ID de usuario y ID de elemento son requeridos para actualizar.');
+            }
+
+            $userId = $input['user_id'];
+            $itemId = $input['id'];
+
+            if (!checkMenuItemOwnership($pdo, $itemId, $userId)) {
+                throw new Exception('No tienes permiso para actualizar este elemento o no existe.');
+            }
+
+            // Construir la consulta de actualización dinámicamente
+            $setClauses = [];
+            $params = [':id' => $itemId];
+
+            if (isset($input['name'])) {
+                $setClauses[] = 'name = :name';
+                $params[':name'] = $input['name'];
+            }
+            if (isset($input['description'])) {
+                $setClauses[] = 'description = :description';
+                $params[':description'] = $input['description'];
+            }
+            if (isset($input['name_en'])) {
+                $setClauses[] = 'name_en = :name_en';
+                $params[':name_en'] = $input['name_en'];
+            }
+            if (isset($input['description_en'])) {
+                $setClauses[] = 'description_en = :description_en';
+                $params[':description_en'] = $input['description_en'];
+            }
+            if (isset($input['name_fr'])) {
+                $setClauses[] = 'name_fr = :name_fr';
+                $params[':name_fr'] = $input['name_fr'];
+            }
+            if (isset($input['description_fr'])) {
+                $setClauses[] = 'description_fr = :description_fr';
+                $params[':description_fr'] = $input['description_fr'];
+            }
+            // Price can be explicitly set to NULL if empty string is passed
+            if (array_key_exists('price', $input)) {
+                $setClauses[] = 'price = :price';
+                $params[':price'] = ($input['price'] === '' || $input['price'] === null) ? null : (float)$input['price'];
+            }
+            if (isset($input['is_available'])) {
+                $setClauses[] = 'is_available = :is_available';
+                $params[':is_available'] = (int)$input['is_available'];
+            }
+
+            if (empty($setClauses)) {
+                throw new Exception('No hay datos para actualizar.');
+            }
+
+            $query = "UPDATE menu_items SET " . implode(', ', $setClauses) . " WHERE id = :id";
+            $stmt = $pdo->prepare($query);
+            $stmt->execute($params);
+
+            echo json_encode(['success' => true, 'message' => 'Elemento de menú actualizado exitosamente.']);
+            break;
+
+
         case 'deleteMenuItem':
             if ($method !== 'POST') throw new Exception('Método no permitido para esta acción.');
             if (!isset($input['user_id']) || !isset($input['id'])) {
